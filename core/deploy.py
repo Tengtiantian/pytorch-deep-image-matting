@@ -24,6 +24,7 @@ def get_args():
     parser.add_argument('--not_strict', action='store_true', help='not copy ckpt strict?')
     parser.add_argument('--crop_or_resize', type=str, default="whole", choices=["resize", "crop", "whole"], help="how manipulate image before test")
     parser.add_argument('--max_size', type=int, default=1600, help="max size of test image")
+    parser.add_argument('--addGrad', action='store_true', help='use grad as a input channel?')
     args = parser.parse_args()
     print(args)
     return args
@@ -83,7 +84,10 @@ def inference_once(args, model, scale_img, scale_trimap, aligned=True):
         tensor_grad = tensor_grad.cuda()
     #print('Img Shape:{} Trimap Shape:{}'.format(img.shape, trimap.shape))
 
-    input_t = torch.cat((tensor_img, tensor_trimap / 255.), 1)
+    if args.addGrad:
+        input_t = torch.cat((tensor_img, tensor_trimap / 255., tensor_grad / 255.), 1)
+    else:
+        input_t = torch.cat((tensor_img, tensor_trimap / 255.), 1)
 
     # forward
     if args.stage <= 1:

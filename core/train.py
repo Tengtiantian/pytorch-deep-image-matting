@@ -48,6 +48,7 @@ def get_args():
     parser.add_argument('--testResDir', type=str, default='', help="test result save to")
     parser.add_argument('--crop_or_resize', type=str, default="whole", choices=["resize", "crop", "whole"], help="how manipulate image before test")
     parser.add_argument('--max_size', type=int, default=1312, help="max size of test image")
+    parser.add_argument('--addGrad', action='store_true', help='use grad as a input channel?')
     args = parser.parse_args()
     print(args)
     return args
@@ -178,6 +179,7 @@ def train(args, model, optimizer, train_loader, epoch):
         fg = Variable(batch[2])
         bg = Variable(batch[3])
         trimap = Variable(batch[4])
+        grad = Variable(batch[5])
         img_norm = Variable(batch[6])
         img_info = batch[-1]
 
@@ -188,6 +190,7 @@ def train(args, model, optimizer, train_loader, epoch):
             bg = bg.cuda()
             trimap = trimap.cuda()
             img_norm = img_norm.cuda()
+            grad = grad.cuda()
 
         #print("Shape: Img:{} Alpha:{} Fg:{} Bg:{} Trimap:{}".format(img.shape, alpha.shape, fg.shape, bg.shape, trimap.shape))
         #print("Val: Img:{} Alpha:{} Fg:{} Bg:{} Trimap:{} Img_info".format(img, alpha, fg, bg, trimap, img_info))
@@ -195,7 +198,10 @@ def train(args, model, optimizer, train_loader, epoch):
         adjust_learning_rate(args, optimizer, epoch)
         optimizer.zero_grad()
 
-        pred_mattes, pred_alpha = model(torch.cat((img_norm, trimap / 255.), 1))
+        if args.addGrad:
+            pred_mattes, pred_alpha = model(torch.cat((img_norm, trimap / 255., grad / 255.), 1))
+        else:
+            pred_mattes, pred_alpha = model(torch.cat((img_norm, trimap / 255.), 1))
 
         if args.stage == 0:
             # stage0 loss, simple alpha loss
