@@ -4,7 +4,7 @@ import os
 import random
 import numpy as np
 from torchvision import transforms
-
+#define a func
 def gen_trimap(alpha):
     k_size = random.choice(range(1, 5))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k_size, k_size))
